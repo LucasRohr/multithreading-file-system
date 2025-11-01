@@ -1,137 +1,61 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
+#include "common.h"
 
-// Variáveis de tipos e arquivos
-const char *logs[]         = { "Interface", "Input", "Operacao", "Localizacao", "Propaganda", "Calculo" };
-const char *nomeArquivos[] = { "buffer.log",
-                               "Interface.log", "Input.log", "Operacao.log", "Localizacao.log", "Propaganda.log", "Calculo.log",
-                               "Omega.log", "KleubsMax.log", "ChirpTome.log"};
-#define nTipoLogs 6
-#define nArquivos 10
-
-// Funções e structs auxiliares
-void moveLogs(const char *origem, const char *destino, const char *palavra);
-void geraLogs(const char *name);
-
-typedef struct {
-    int id;
-    pthread_mutex_t mutex;
-} ArquivoData;
-
-typedef struct {
-    pthread_t thread;
-    bool stop;
-    bool acessando[nArquivos]; // true se acessando
-} ThreadData;
-
-void LogThread(ThreadData *t);
-
-// Funções das threads
-void *ThreadBuffer(void *arg);
-
-// Dados globais
-ArquivoData arquivos[nArquivos];
-ThreadData threadBuffer;
+// Arquivos globais
+ArquivoData arquivos[N_ARQUIVOS];
 
 int main() {
     srand(time(NULL));
-
     printf("Iniciando...\n");
 
-    // Inicializa os arquivos e mutexes
-    for (int i = 0; i < nArquivos; i++) {
+    // 1. Inicializa os arquivos e mutexes
+    for (int i = 0; i < N_ARQUIVOS; i++) {
         arquivos[i].id = i;
+
+        if (pthread_mutex_init(&arquivos[i].mutex, NULL) != 0) {
+            perror("Falha ao inicializar mutex");
+            exit(EXIT_FAILURE);
+        }
     }
 
-    // Inicializa thread de buffer
-    for (int i = 0; i < nArquivos; i++)
-        threadBuffer.acessando[i] = false;
-    threadBuffer.stop = false;
+    // 2. Preparar dados e cria as threads
+    ThreadData threadBuffer;
+    ThreadData threadsOrg[N_THREADS_ORGANIZADORAS];
+    ThreadData threadsEmp[N_THREADS_EMPRESAS];
+
     pthread_create(&threadBuffer.thread, NULL, ThreadBuffer, &threadBuffer); // arquivo 0 = buffer
 
+    // Inicializar e criar as 5 Threads Organizadoras
+    // (Passar argumentos para elas saberem o que fazer)
+    // for (i = 0; i < N_THREADS_ORGANIZADORAS; i++) { ... }
 
-    // Deixa rodar por 3 segundos
-    sleep(3);
+    // Inicializar e criar as 3 Threads das Empresas
+    // (Também precisarão de argumentos)
+    // for (i = 0; i < N_THREADS_EMPRESAS; i++) { ... }
 
+    // 3. Loop principal
+    // Por enquanto, apenas um sleep
+    sleep(10);
+
+    // 4. Sinalizar parada para todas as threads
     printf("Parando threads.\n");
 
     threadBuffer.stop = true;
+    // for (i = 0; i < N_THREADS_ORGANIZADORAS; i++) { threadsOrg[i].stop = true; }
+    // for (i = 0; i < N_THREADS_EMPRESAS; i++) { threadsEmp[i].stop = true; }
+
+    // 5. Aguardar (join) todas as threads
     pthread_join(threadBuffer.thread, NULL);
+    // ... joins para as outras threads
+
+    // 6. Destrói cada mutex por boa prática
+    for (int i = 0; i < N_ARQUIVOS; i++) {
+        if (pthread_mutex_destroy(&arquivos[i].mutex) != 0) {
+            perror("Falha ao destruir mutex");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     printf("Finalizando.\n");
 
     return 0;
 }
-
-///////////////////////
-// Funções das Threads
-void *ThreadBuffer(void *arg) {
-
-    ThreadData* myself = (ThreadData*)arg;
-    ArquivoData *d = &arquivos[0];
-
-    while(!myself->stop) {
-        pthread_mutex_lock(&d->mutex);
-        threadBuffer.acessando[0] = true;
-
-        LogThread(myself);
-        geraLogs(nomeArquivos[d->id]);
-
-        threadBuffer.acessando[0] = false;
-        pthread_mutex_unlock(&d->mutex);
-
-        sleep(1);
-    }
-    return NULL;
-}
-///////////////////////
-
-
-///////////////////////
-// Funções auxiliares
-void geraLogs(const char *name) {
-    FILE *f = fopen(name, "a");
-
-    for (int i = 0; i < 5; i++) {
-        fprintf(f, "%s\n", logs[rand() % nTipoLogs]);
-    }
-
-    fclose(f);
-}
-void moveLog(const char *origem, const char *destino, const char *palavra) {
-    char tempName[100];
-    strcat(tempName, origem);
-    strcat(tempName, "_temp.log");
-
-    FILE *fin = fopen(origem, "r");
-    FILE *fout = fopen(destino, "a");
-    FILE *ftemp = fopen(tempName, "w");
-
-    char linha[256];
-    while (fgets(linha, sizeof(linha), fin)) {
-        if (strstr(linha, palavra))
-            fputs(linha, fout);
-        else
-            fputs(linha, ftemp);
-    }
-
-    fclose(fin);
-    fclose(fout);
-    fclose(ftemp);
-
-
-    remove(origem);
-    rename(tempName, origem);
-}
-void LogThread(ThreadData *t) {
-    printf("Thread %d:");
-    for(int i = 0; i < nArquivos; i++)
-        printf(" %c:%d", nomeArquivos[i][0], t->acessando[i]);
-    printf("\n");
-}
-///////////////////////
