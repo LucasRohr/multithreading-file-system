@@ -20,17 +20,52 @@ void *ThreadBuffer(void *arg) {
     return NULL;
 }
 
+// Função para gerenciamento do acesso a um arquivo de logs via thread dedicada e thread do buffer
 void *ThreadOrganizadora(void *arg) {
-    // Esta thread precisará saber qual log ela procura.
-    // Você pode passar um struct mais complexo como 'arg'.
-    // Exemplo: { ThreadData* data, const char* tipo_log, int idx_arquivo_log }
+    // 1. Recupera os argumentos
+    ThreadOrganizadoraArgs* args = (ThreadOrganizadoraArgs*)arg;
+    ThreadData* myself = args->data;
+    const char* tipo_log = args->log_type;
+    int idx_origem = args->idx_arquivo_origem;
+    int idx_destino = args->idx_arquivo_destino;
     
-    // Loop:
-    // 1. Travar mutex do buffer.log
-    // 2. Travar mutex do seu arquivo de destino (ex: Interface.log)
-    // 3. Chamar moveLog(...)
-    // 4. Destravar ambos os mutexes
-    // 5. sleep(...)
+    ArquivoData *arquivoBuffer = &arquivos[idx_origem];
+    ArquivoData *arquivoLogs = &arquivos[idx_destino];
+
+    printf("INFO: Thread Organizadora (%s) iniciada.\n", tipo_log);
+
+    while(!myself->stop) {
+        // Simula um tempo de "espera" ou "processamento"
+        sleep(2);
+
+        // 2. Entra na Região Crítica (tenta travar os dois mutexes)
+
+        // Trava mutex do buffer
+        pthread_mutex_lock(&arquivoBuffer->mutex);
+        myself->acessando[idx_origem] = true;
+
+        // Trava mutex do seu arquivo de destino (ex: Interface.log)
+        pthread_mutex_lock(&arquivoLogs->mutex);
+        myself->acessando[idx_destino] = true;
+
+        // 3. Loga o estado atual
+        LogThread(myself);
+
+        // 4. Realiza o movimento de logs
+        moveLogs(nomeArquivos[idx_origem], nomeArquivos[idx_destino], tipo_log);
+
+        // 5. Sai da Região Crítica
+        myself->acessando[idx_origem] = false;
+        myself->acessando[idx_destino] = false;
+
+        // 6. Destravar ambos os mutexes
+        // Libera os mutexes na ordem inversa em que foram travados pra evitar deadlocks
+        pthread_mutex_unlock(&arquivos[idx_destino].mutex);
+        pthread_mutex_unlock(&arquivos[idx_origem].mutex);
+    }
+
+    printf("INFO: Thread Organizadora (%s) finalizando.\n", tipo_log);
+
     return NULL;
 }
 

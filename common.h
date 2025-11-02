@@ -46,6 +46,14 @@ typedef struct {
     bool acessando[N_ARQUIVOS];
 } ThreadData;
 
+// Representação dos argumentos para gerenciamento das threads de logs (organizadoras)
+typedef struct {
+    ThreadData *data;            // Ponteiro para seus próprios dados de thread
+    const char *log_type;        // O tipo de log que ela procura (ex: "Interface")
+    int idx_arquivo_origem;      // Sempre IDX_BUFFER
+    int idx_arquivo_destino;     // O arquivo para onde ela deve mover (ex: IDX_INTERFACE)
+} ThreadOrganizadoraArgs;
+
 // --- Dados Globais (Declarações) ---
 extern ArquivoData arquivos[N_ARQUIVOS];
 
