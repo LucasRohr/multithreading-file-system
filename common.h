@@ -32,11 +32,13 @@ extern const char *nomeArquivos[];
 
 // --- Estruturas de Dados ---
 
+// Representação de arquivo com mutex para travar thread
 typedef struct {
     int id;
     pthread_mutex_t mutex;
 } ArquivoData;
 
+// Representação de uma Thread, com flag de acesso e pausa
 typedef struct {
     pthread_t thread;
     int id_logico; // Para sabermos qual thread é (0-8)

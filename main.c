@@ -17,12 +17,12 @@ int main() {
         }
     }
 
-    // 2. Preparar dados e cria as threads
+    // 2. Prepara dados e cria as threads
     ThreadData threadBuffer;
     ThreadData threadsOrg[N_THREADS_ORGANIZADORAS];
     ThreadData threadsEmp[N_THREADS_EMPRESAS];
 
-    pthread_create(&threadBuffer.thread, NULL, ThreadBuffer, &threadBuffer); // arquivo 0 = buffer
+    pthread_create(&threadBuffer.thread, NULL, ThreadBuffer, &threadBuffer); // Cria thread do buffer
 
     // Inicializar e criar as 5 Threads Organizadoras
     // (Passar argumentos para elas saberem o que fazer)

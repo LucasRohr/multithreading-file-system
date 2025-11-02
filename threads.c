@@ -1,18 +1,19 @@
 #include "common.h"
 
+// A thread do buffer de dados de input
 void *ThreadBuffer(void *arg) {
     ThreadData* myself = (ThreadData*)arg;
     ArquivoData *d = &arquivos[IDX_BUFFER];
 
     while(!myself->stop) {
-        pthread_mutex_lock(&d->mutex);
+        pthread_mutex_lock(&d->mutex); // Trava thread
         myself->acessando[IDX_BUFFER] = true;
-        LogThread(myself);
+        LogThread(myself); // Printa dados
         
-        geraLogs(nomeArquivos[d->id]);
+        geraLogs(nomeArquivos[d->id]); // Gera logs no buffer
 
         myself->acessando[IDX_BUFFER] = false;
-        pthread_mutex_unlock(&d->mutex);
+        pthread_mutex_unlock(&d->mutex); // Destrava thread
         sleep(1);
     }
 

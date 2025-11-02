@@ -6,6 +6,8 @@ const char *nomeArquivos[] = { "buffer.log",
                                "Omega.log", "KleubsMax.log", "ChirpTome.log"};
 
 // --- Funções auxiliares --
+
+// Função para simular geração de logs com dados randomicos
 void geraLogs(const char *name) {
     FILE *f = fopen(name, "a");
 
@@ -16,6 +18,7 @@ void geraLogs(const char *name) {
     fclose(f);
 }
 
+// Copia linhas do arquivo origem para o destino e remove linhas do arquivo de origem
 void moveLog(const char *origem, const char *destino, const char *palavra) {
     char tempName[100];
     strcat(tempName, origem);
@@ -38,13 +41,13 @@ void moveLog(const char *origem, const char *destino, const char *palavra) {
     fclose(fout);
     fclose(ftemp);
 
-
     remove(origem);
     rename(tempName, origem);
 }
 
+// Função para printar dados de uma thread
 void LogThread(ThreadData *t) {
-    printf("Thread %d:");
+    printf("Thread %d:", t->id_logico);
 
     for(int i = 0; i < N_ARQUIVOS; i++) {
         printf(" %c:%d", nomeArquivos[i][0], t->acessando[i]);
