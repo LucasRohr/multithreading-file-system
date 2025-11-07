@@ -19,7 +19,7 @@ void geraLogs(const char *name) {
 }
 
 // Copia linhas do arquivo origem para o destino e remove linhas do arquivo de origem
-void moveLog(const char *origem, const char *destino, const char *palavra) {
+void moveLogs(const char *origem, const char *destino, const char *palavra) {
     char tempName[100];
     strcat(tempName, origem);
     strcat(tempName, "_temp.log");

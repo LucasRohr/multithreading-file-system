@@ -73,50 +73,56 @@ void *ThreadEmpresa(void *arg) {
      // 1. Recupera os argumentos
     ThreadEmpresaArgs* args = (ThreadEmpresaArgs*)arg;
     ThreadData* myself = args->data;
-    const char* tipo_log[N_THREADS_EMPRESAS] = args->log_types;
-    int lista_idx_origem[N_THREADS_EMPRESAS] = args->lista_idx_arquivo_origem;
     int idx_destino = args->idx_arquivo_destino;
+    int num_fontes = args->num_fontes;
     
     ArquivoData *arquivoDestino = &arquivos[idx_destino];
 
-    printf("INFO: Thread Organizadora (%s) iniciada.\n", tipo_log);
+    printf("INFO: Thread Empresa (ID %d) iniciada. Destino: %s\n", myself->id_logico, nomeArquivos[idx_destino]);
 
     while (!myself->stop) {
-        // Simula um tempo de "espera" ou "processamento"
-        sleep(2);
+        // Simula um tempo de espera/processamento randomico
+        sleep(rand() % 5 + 1);
 
-        // 2. Entra na Região Crítica (tenta travar os mutexes de logs e o da empresa)
-        for(int i = 0; i < N_THREADS_EMPRESAS; i++) {
-            ArquivoData *arquivoLogs = &arquivos[lista_idx_origem[i]];
+        // 2. Tenta travar todos os mutexes necessários, um por um (parte vulnerável a deadlock)
 
-            pthread_mutex_lock(&arquivoLogs->mutex);
-            myself->acessando[lista_idx_origem[i]] = true;
+        // Trava os mutexes dos arquivos de origem
+        for (int i = 0; i < num_fontes; i++) {
+            int idx_fonte = args->lista_idx_arquivo_origem[i];
+
+            pthread_mutex_lock(&arquivos[idx_fonte].mutex);
+            myself->acessando[idx_fonte] = true;
         }
 
+        // Trava o arquivo de destino
         pthread_mutex_lock(&arquivoDestino->mutex);
+        myself->acessando[idx_destino] = true;
 
-        // 3. Loga o estado atual
+        // 3. Loga o estado atual (agora com todos os arquivos travados)
         LogThread(myself);
 
-        // 4. Realiza o movimento de logs para cada arquivo de logs que a empresa possui interesse
-        for(int i = 0; i < N_THREADS_EMPRESAS; i++) {
-            moveLogs(nomeArquivos[lista_idx_origem[i]], nomeArquivos[idx_destino], tipo_log[i]);
+        // 4. Realiza o movimento de logs para cada arquivo que a empresa possui interesse, para o arquivo da empresa
+        for (int i = 0; i < num_fontes; i++) {
+            int idx_fonte = args->lista_idx_arquivo_origem[i];
+            const char* log_tipo = args->log_types[i];
 
-            // 5. Sai da Região Crítica
-            myself->acessando[lista_idx_origem[i]] = false;
+            moveLogs(nomeArquivos[idx_fonte], nomeArquivos[idx_destino], log_tipo); // Move da fonte para o arquivo da empresa
         }
 
-        // 5. Sai da Região Crítica
+        // 5. Libera todos os mutexes (em ordem inversa)
         myself->acessando[idx_destino] = false;
+        pthread_mutex_unlock(&arquivos[idx_destino].mutex); // Libera do destino
 
-        // 6. Destravar todos os mutexes
-        // Libera os mutexes na ordem inversa em que foram travados pra evitar deadlocks
-        pthread_mutex_unlock(&arquivos[idx_destino].mutex);
+        // Libera de cada arquivo fonte travado anteriormente
+        for (int i = num_fontes - 1; i >= 0; i--) {
+            int idx_fonte = args->lista_idx_arquivo_origem[i];
+            myself->acessando[idx_fonte] = false;
 
-        for(int i = 0; i < N_THREADS_EMPRESAS; i++) {
-            pthread_mutex_unlock(&arquivos[lista_idx_origem[i]].mutex);
+            pthread_mutex_unlock(&arquivos[idx_fonte].mutex);
         }
     }
+
+    printf("INFO: Thread Empresa (ID %d) finalizando.\n", myself->id_logico);
 
     return NULL;
 }

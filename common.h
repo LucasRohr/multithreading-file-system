@@ -57,9 +57,10 @@ typedef struct {
 // Representação dos argumentos para gerenciamento das threads de empresas
 typedef struct {
     ThreadData *data;                                // Ponteiro para seus próprios dados de thread
-    const char **log_types;       // O tipo de logs que a empresa procura, sendo sempre 3
+    const char **log_types;                         // O tipo de logs que a empresa procura, sendo sempre 3
     int* lista_idx_arquivo_origem;                   // IDs dos logs que a empresa procura, sendo sempre 3
     int idx_arquivo_destino;                         // O arquivo para onde ela deve mover (ex: IDX_OMEGA)
+    int num_fontes;                                 // Tamanho do array de fontes
 } ThreadEmpresaArgs;
 
 // --- Dados Globais (Declarações) ---
