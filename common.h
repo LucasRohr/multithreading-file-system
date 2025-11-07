@@ -14,6 +14,7 @@
 #define N_ARQUIVOS 10
 #define N_THREADS_ORGANIZADORAS 5
 #define N_THREADS_EMPRESAS 3
+#define N_THREADS_TOTAL (1 + N_THREADS_ORGANIZADORAS + N_THREADS_EMPRESAS)
 
 // Índices para os arquivos
 #define IDX_BUFFER 0
@@ -29,6 +30,7 @@
 
 extern const char *logs[];
 extern const char *nomeArquivos[];
+extern const char *threadNames[N_THREADS_TOTAL];
 
 // --- Estruturas de Dados ---
 

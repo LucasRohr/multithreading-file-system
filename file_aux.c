@@ -5,6 +5,18 @@ const char *nomeArquivos[] = { "buffer.log",
                                "Interface.log", "Input.log", "Operacao.log", "Localizacao.log", "Propaganda.log", "Calculo.log",
                                "Omega.log", "KleubsMax.log", "ChirpTome.log"};
 
+const char *threadNames[N_THREADS_TOTAL] = {
+    "Produtora",
+    "Org_Interface",
+    "Org_Operacao",
+    "Org_Localizacao",
+    "Org_Propaganda",
+    "Org_Calculo",
+    "Emp_Omega",
+    "Emp_KleubsMax",
+    "Emp_ChirpTome"
+};
+
 // --- Funções auxiliares --
 
 // Função para simular geração de logs com dados randomicos
@@ -47,13 +59,33 @@ void moveLogs(const char *origem, const char *destino, const char *palavra) {
 
 // Função para printar dados de uma thread
 void LogThread(ThreadData *t) {
-    printf("Thread %d:", t->id_logico);
+    // Prepara uma string para os nomes dos arquivos
+    char arquivos_acessados[256] = {0}; // Buffer para os nomes
+    bool primeiro = true;
 
-    for(int i = 0; i < N_ARQUIVOS; i++) {
-        printf(" %c:%d", nomeArquivos[i][0], t->acessando[i]);
+    // Itera por todos os arquivos
+    for (int i = 0; i < N_ARQUIVOS; i++) {
+        // Se a thread está acessando, adiciona o nome na string
+        if (t->acessando[i]) {
+            if (!primeiro) {
+                // Adiciona uma vírgula se não for o primeiro arquivo
+                strcat(arquivos_acessados, ", ");
+            }
+            // Adiciona o nome do arquivo
+            strcat(arquivos_acessados, nomeArquivos[i]);
+            primeiro = false;
+        }
     }
 
-    printf("\n");
+    // Imprime o log formatado
+    // Se 'primeiro' ainda é true, significa que nenhum arquivo foi acessado
+    if (primeiro) {
+        printf("LOG: [Thread %s] está ativa (sem travas)\n", threadNames[t->id_logico]);
+    } else {
+        printf("LOG: [Thread %s] está acessando -> [%s]\n", 
+               threadNames[t->id_logico], 
+               arquivos_acessados);
+    }
 }
 
 // ------
