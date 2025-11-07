@@ -7,6 +7,17 @@ const char* tipos_organizadoras[] = {
     "Interface", "Operacao", "Localizacao", "Propaganda", "Calculo"
 };
 
+// Define os interesses de cada empresa
+int fontes_omega[N_THREADS_EMPRESAS] = {IDX_OPERACAO, IDX_PROPAGANDA, IDX_CALCULO};
+const char* logs_omega[N_THREADS_EMPRESAS] = {"Operacao", "Propaganda", "Calculo"};
+
+int fontes_kleubsmax[N_THREADS_EMPRESAS] = {IDX_PROPAGANDA, IDX_INTERFACE, IDX_LOCALIZACAO};
+const char* logs_kleubsmax[N_THREADS_EMPRESAS] = {"Propaganda", "Interface", "Localizacao"};
+
+// ChirpTome busca 'Input' direto do BUFFER
+int fontes_chirptome[N_THREADS_EMPRESAS] = {IDX_CALCULO, IDX_LOCALIZACAO, IDX_BUFFER};
+const char* logs_chirptome[N_THREADS_EMPRESAS] = {"Calculo", "Localizacao", "Input"};
+
 int idx_destino_organizadoras[] = {
     IDX_INTERFACE, IDX_OPERACAO, IDX_LOCALIZACAO, IDX_PROPAGANDA, IDX_CALCULO
 };
@@ -31,6 +42,7 @@ int main() {
     ThreadData threadsEmp[N_THREADS_EMPRESAS];
 
     ThreadOrganizadoraArgs argsOrganizadora[N_THREADS_ORGANIZADORAS];
+    ThreadEmpresaArgs argsEmpresa[N_THREADS_EMPRESAS];
 
     // Inicializar e criar a Thread do Buffer
     threadBuffer.id_logico = 0;
@@ -65,12 +77,38 @@ int main() {
     }
 
     // Inicializar e criar as 3 Threads das Empresas
-    // (Também precisarão de argumentos)
-    // for (i = 0; i < N_THREADS_EMPRESAS; i++) { ... }
+    printf("Criando threads das empresas...\n");
 
-    // 3. Loop principal
-    // Por enquanto, apenas um sleep
-    sleep(10);
+    // Empresa 0: Ômega
+    threadsEmp[0].id_logico = 6; // IDs 6, 7, 8
+    threadsEmp[0].stop = false;
+    argsEmpresa[0].data = &threadsEmp[0];
+    argsEmpresa[0].idx_arquivo_destino = IDX_OMEGA;
+    argsEmpresa[0].lista_idx_arquivo_origem = fontes_omega;
+    argsEmpresa[0].log_types = logs_omega;
+    pthread_create(&threadsEmp[0].thread, NULL, ThreadEmpresa, &argsEmpresa[0]);
+
+    // Empresa 1: KleubsMax
+    threadsEmp[1].id_logico = 7;
+    threadsEmp[1].stop = false;
+    argsEmpresa[1].data = &threadsEmp[1];
+    argsEmpresa[1].idx_arquivo_destino = IDX_KLEUBSMAX;
+    argsEmpresa[1].lista_idx_arquivo_origem = fontes_kleubsmax;
+    argsEmpresa[1].log_types = logs_kleubsmax;
+    pthread_create(&threadsEmp[1].thread, NULL, ThreadEmpresa, &argsEmpresa[1]);
+
+    // Empresa 2: ChirpTome
+    threadsEmp[2].id_logico = 8;
+    threadsEmp[2].stop = false;
+    argsEmpresa[2].data = &threadsEmp[2];
+    argsEmpresa[2].idx_arquivo_destino = IDX_CHIRPTOME;
+    argsEmpresa[2].lista_idx_arquivo_origem = fontes_chirptome;
+    argsEmpresa[2].log_types = logs_chirptome;
+    pthread_create(&threadsEmp[2].thread, NULL, ThreadEmpresa, &argsEmpresa[2]);
+
+    // 3. Loop principal (Parte 2: Detecção de Deadlock)
+    // Deixar rodar por mais tempo para ter deadlock
+    sleep(20);
 
     // 4. Sinalizar parada para todas as threads
     printf("Parando threads...\n");
@@ -81,7 +119,9 @@ int main() {
         threadsOrg[i].stop = true;
     }
 
-    // for (i = 0; i < N_THREADS_EMPRESAS; i++) { threadsEmp[i].stop = true; }
+    for (int i = 0; i < N_THREADS_EMPRESAS; i++) { // <-- NOVO
+        threadsEmp[i].stop = true;
+    }
 
     // 5. Aguardar (join) todas as threads
     pthread_join(threadBuffer.thread, NULL);
@@ -90,7 +130,9 @@ int main() {
         pthread_join(threadsOrg[i].thread, NULL);
     }
 
-    // ... joins para as outras threads
+    for (int i = 0; i < N_THREADS_EMPRESAS; i++) { // <-- NOVO
+        pthread_join(threadsEmp[i].thread, NULL);
+    }
 
     // 6. Destrói cada mutex por boa prática
     for (int i = 0; i < N_ARQUIVOS; i++) {

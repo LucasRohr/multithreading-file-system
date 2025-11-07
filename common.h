@@ -51,8 +51,16 @@ typedef struct {
     ThreadData *data;            // Ponteiro para seus próprios dados de thread
     const char *log_type;        // O tipo de log que ela procura (ex: "Interface")
     int idx_arquivo_origem;      // Sempre IDX_BUFFER
-    int idx_arquivo_destino;     // O arquivo para onde ela deve mover (ex: IDX_INTERFACE)
+    int idx_arquivo_destino;     // O arquivo de empresa para onde ela deve mover (ex: IDX_OMEGA)
 } ThreadOrganizadoraArgs;
+
+// Representação dos argumentos para gerenciamento das threads de empresas
+typedef struct {
+    ThreadData *data;                                // Ponteiro para seus próprios dados de thread
+    const char **log_types;       // O tipo de logs que a empresa procura, sendo sempre 3
+    int* lista_idx_arquivo_origem;                   // IDs dos logs que a empresa procura, sendo sempre 3
+    int idx_arquivo_destino;                         // O arquivo para onde ela deve mover (ex: IDX_OMEGA)
+} ThreadEmpresaArgs;
 
 // --- Dados Globais (Declarações) ---
 extern ArquivoData arquivos[N_ARQUIVOS];

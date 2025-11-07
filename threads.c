@@ -70,15 +70,53 @@ void *ThreadOrganizadora(void *arg) {
 }
 
 void *ThreadEmpresa(void *arg) {
-    // Lógica mais complexa.
-    // Ex: Thread Ômega [cite: 137]
-    // Loop:
-    // 1. Travar mutex do Operacao.log
-    // 2. Travar mutex do Propaganda.log
-    // 3. Travar mutex do Calculo.log
-    // 4. Travar mutex do Omega.log
-    // 5. Chamar moveLog 3x
-    // 6. Destravar os 4 mutexes
-    // 7. sleep(...)
+     // 1. Recupera os argumentos
+    ThreadEmpresaArgs* args = (ThreadEmpresaArgs*)arg;
+    ThreadData* myself = args->data;
+    const char* tipo_log[N_THREADS_EMPRESAS] = args->log_types;
+    int lista_idx_origem[N_THREADS_EMPRESAS] = args->lista_idx_arquivo_origem;
+    int idx_destino = args->idx_arquivo_destino;
+    
+    ArquivoData *arquivoDestino = &arquivos[idx_destino];
+
+    printf("INFO: Thread Organizadora (%s) iniciada.\n", tipo_log);
+
+    while (!myself->stop) {
+        // Simula um tempo de "espera" ou "processamento"
+        sleep(2);
+
+        // 2. Entra na Região Crítica (tenta travar os mutexes de logs e o da empresa)
+        for(int i = 0; i < N_THREADS_EMPRESAS; i++) {
+            ArquivoData *arquivoLogs = &arquivos[lista_idx_origem[i]];
+
+            pthread_mutex_lock(&arquivoLogs->mutex);
+            myself->acessando[lista_idx_origem[i]] = true;
+        }
+
+        pthread_mutex_lock(&arquivoDestino->mutex);
+
+        // 3. Loga o estado atual
+        LogThread(myself);
+
+        // 4. Realiza o movimento de logs para cada arquivo de logs que a empresa possui interesse
+        for(int i = 0; i < N_THREADS_EMPRESAS; i++) {
+            moveLogs(nomeArquivos[lista_idx_origem[i]], nomeArquivos[idx_destino], tipo_log[i]);
+
+            // 5. Sai da Região Crítica
+            myself->acessando[lista_idx_origem[i]] = false;
+        }
+
+        // 5. Sai da Região Crítica
+        myself->acessando[idx_destino] = false;
+
+        // 6. Destravar todos os mutexes
+        // Libera os mutexes na ordem inversa em que foram travados pra evitar deadlocks
+        pthread_mutex_unlock(&arquivos[idx_destino].mutex);
+
+        for(int i = 0; i < N_THREADS_EMPRESAS; i++) {
+            pthread_mutex_unlock(&arquivos[lista_idx_origem[i]].mutex);
+        }
+    }
+
     return NULL;
 }
