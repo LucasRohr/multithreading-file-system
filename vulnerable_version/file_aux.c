@@ -33,7 +33,7 @@ void geraLogs(const char *name) {
 // Copia linhas do arquivo origem para o destino e remove linhas do arquivo de origem
 void moveLogs(const char *origem, const char *destino, const char *palavra) {
     char tempName[100];
-    strcat(tempName, origem);
+    strcpy(tempName, origem);
     strcat(tempName, "_temp.log");
 
     FILE *fin = fopen(origem, "r");

@@ -64,6 +64,10 @@ int main() {
     threadBuffer.stop = false;
     threadBuffer.target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
 
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadBuffer.acessando[j] = false;
+    }
+
     all_threads[0] = &threadBuffer; // Primeira thread é o buffer
 
     pthread_create(&threadBuffer.thread, NULL, ThreadBuffer, &threadBuffer);
@@ -105,6 +109,11 @@ int main() {
     threadsEmp[0].id_logico = 6; // IDs 6, 7, 8
     threadsEmp[0].stop = false;
     threadsEmp[0].target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadsEmp[0].acessando[j] = false;
+    }
+
     all_threads[6] = &threadsEmp[0]; // Atribui thread na lista
 
     argsEmpresa[0].data = &threadsEmp[0];
@@ -118,6 +127,11 @@ int main() {
     threadsEmp[1].id_logico = 7;
     threadsEmp[1].stop = false;
     threadsEmp[1].target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadsEmp[1].acessando[j] = false;
+    }
+
     all_threads[7] = &threadsEmp[1]; // Atribui thread na lista
 
     argsEmpresa[1].data = &threadsEmp[1];
@@ -131,6 +145,11 @@ int main() {
     threadsEmp[2].id_logico = 8;
     threadsEmp[2].stop = false;
     threadsEmp[2].target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadsEmp[2].acessando[j] = false;
+    }
+
     all_threads[8] = &threadsEmp[2]; // Atribui thread na lista
 
     argsEmpresa[2].data = &threadsEmp[2];

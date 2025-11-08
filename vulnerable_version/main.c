@@ -47,6 +47,11 @@ int main() {
     // Inicializar e criar a Thread do Buffer
     threadBuffer.id_logico = 0;
     threadBuffer.stop = false;
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadBuffer.acessando[j] = false;
+    }
+
     pthread_create(&threadBuffer.thread, NULL, ThreadBuffer, &threadBuffer);
 
     printf("Thread do Buffer criada\n");
@@ -82,6 +87,11 @@ int main() {
     // Empresa 0: Ômega
     threadsEmp[0].id_logico = 6; // IDs 6, 7, 8
     threadsEmp[0].stop = false;
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadsEmp[0].acessando[j] = false;
+    }
+
     argsEmpresa[0].data = &threadsEmp[0];
     argsEmpresa[0].idx_arquivo_destino = IDX_OMEGA;
     argsEmpresa[0].lista_idx_arquivo_origem = fontes_omega;
@@ -92,6 +102,11 @@ int main() {
     // Empresa 1: KleubsMax
     threadsEmp[1].id_logico = 7;
     threadsEmp[1].stop = false;
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadsEmp[1].acessando[j] = false;
+    }
+
     argsEmpresa[1].data = &threadsEmp[1];
     argsEmpresa[1].idx_arquivo_destino = IDX_KLEUBSMAX;
     argsEmpresa[1].lista_idx_arquivo_origem = fontes_kleubsmax;
@@ -102,6 +117,11 @@ int main() {
     // Empresa 2: ChirpTome
     threadsEmp[2].id_logico = 8;
     threadsEmp[2].stop = false;
+
+    for (int j = 0; j < N_ARQUIVOS; j++) {
+        threadsEmp[2].acessando[j] = false;
+    }
+    
     argsEmpresa[2].data = &threadsEmp[2];
     argsEmpresa[2].idx_arquivo_destino = IDX_CHIRPTOME;
     argsEmpresa[2].lista_idx_arquivo_origem = fontes_chirptome;
