@@ -37,9 +37,30 @@ void moveLogs(const char *origem, const char *destino, const char *palavra) {
     strcat(tempName, "_temp.log");
 
     FILE *fin = fopen(origem, "r");
-    FILE *fout = fopen(destino, "a");
-    FILE *ftemp = fopen(tempName, "w");
+    // Checagem 1
+    // Se fin é NULL, o arquivo de origem não existe
+    if (fin == NULL) {
+        return;
+    }
 
+    FILE *fout = fopen(destino, "a");
+    // Checagem 2
+    if (fout == NULL) {
+        perror("moveLogs: Falha ao abrir arquivo de destino");
+        fclose(fin); // Fecha o 'fin' que abrimos com sucesso
+        return;
+    }
+
+    FILE *ftemp = fopen(tempName, "w");
+    // Checagem 3
+    if (ftemp == NULL) {
+        perror("moveLogs: Falha ao abrir arquivo temporário");
+        fclose(fin);
+        fclose(fout);
+        return;
+    }
+
+    // Agora é seguro usar fin, fout e ftemp
     char linha[256];
 
     while (fgets(linha, sizeof(linha), fin)) {
