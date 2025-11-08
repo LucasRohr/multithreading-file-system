@@ -174,3 +174,123 @@ void *ThreadEmpresa(void *arg) {
 
     return NULL;
 }
+
+// --- Funções para a Parte 3 ---
+
+// Função para destravar uma lista de arquivos
+static void unlock_multiplos_arquivos(ThreadData* myself, int* indices_arquivos, int num_arquivos) {
+    for (int i = 0; i < num_arquivos; i++) {
+        int idx = indices_arquivos[i];
+
+        if (myself->acessando[idx]) { // Se estiver acessando arquivo
+            myself->acessando[idx] = false; // Reseta flag
+            arquivos[idx].accessing_thread_id = -1; // Reseta thread que acessa arquivo
+            pthread_mutex_unlock(&arquivos[idx].mutex); // Destrava mutex
+        }
+    }
+}
+
+// Função que tenta travar todos os arquivos necessários para uma thread que quer ter acesso
+// Caso não conseguir travar algum, libera todos os travados anteriormente
+// Retorna true se travou todos e false caso contrário
+static bool lock_multiplos_arquivos_prevencao(ThreadData* myself, int* indices_arquivos, int num_arquivos) {
+    // Tenta pegar todos os locks
+    for (int i = 0; i < num_arquivos; i++) {
+        int idx = indices_arquivos[i];
+        myself->target_arquivo_id = idx; // Seta arquivo alvo da thread
+
+        int return_lock = pthread_mutex_trylock(&arquivos[idx].mutex); // Tenta travar arquivo
+
+        if (return_lock == EBUSY) {
+            // Falhou pois o arquivo está ocupado
+            // Então destrava todos travados até aqui
+            myself->target_arquivo_id = -1;
+            
+            for (int j = 0; j < i; j++) {
+                pthread_mutex_unlock(&arquivos[indices_arquivos[j]].mutex);
+            }
+
+            return false; // Falhou travar todos
+        } else if (return_lock != 0) {
+            // Outro erro, falha também
+            perror("lock_multiplos_prevencao: trylock");
+
+            return false;
+        }
+    }
+
+    // Se chegou aqui, conseguiu fazer lock em todos os arquivos e atualiza a lista de acessos
+    myself->target_arquivo_id = -1;
+
+    for (int i = 0; i < num_arquivos; i++) {
+        int idx = indices_arquivos[i];
+    
+        myself->acessando[idx] = true; // Seta flag de acesso
+        arquivos[idx].accessing_thread_id = myself->id_logico; // Seta thread que está acessando o arquivo
+    }
+
+    return true; // Sucesso ao travar todos
+}
+
+// Função para a thread das empresas focando na prevenção de deadlocks para a Parte 3
+void *ThreadEmpresa_Prevencao(void *arg) {
+    ThreadEmpresaArgs* args = (ThreadEmpresaArgs*)arg;
+    ThreadData* myself = args->data;
+    int idx_destino = args->idx_arquivo_destino;
+    int num_fontes = args->num_fontes;
+
+    // Monta array único com todos os arquivos que precisam ser travados (fontes + destino)
+    int num_total_arquivos = num_fontes + 1;
+    int* todos_indices = malloc(sizeof(int) * num_total_arquivos);
+
+    if (todos_indices == NULL) {
+        perror("ThreadEmpresa_Prevencao: Falha ao alocar memória");
+        return NULL;
+    }
+
+    // Adiciona arquivos de fonte no array
+    for (int i = 0; i < num_fontes; i++) {
+        todos_indices[i] = args->lista_idx_arquivo_origem[i];
+    }
+
+    todos_indices[num_fontes] = idx_destino; // Adiciona o arquivo de destino ao array
+
+    printf("INFO: Thread Empresa [PREVENÇÃO] (ID %d) iniciada.\n", myself->id_logico);
+
+    while (!myself->stop) {
+        sleep(rand() % 5 + 1);
+
+        // Tenta dar lock em todos os arquivos (ou nenhum, se falhar em algum) em um loop
+        while (!lock_multiplos_arquivos_prevencao(myself, todos_indices, num_total_arquivos)) {
+            // Se falhou, checa se deve parar
+            if (myself->stop) {
+                free(todos_indices);
+                return NULL; 
+            }
+
+            // Se chegou aqui, não conseguiu todos os locks, espera e tenta de novo
+            usleep(100 * 1000); // 100ms
+        }
+
+        // Região crítica
+        // Se chegou aqui, tem todos os locks necessários, então não haver ter deadlock
+        
+        LogThread(myself); // Printa dados
+
+        // Realiza o movimento de logs para cada arquivo que a empresa possui interesse, para o arquivo da empresa
+        for (int i = 0; i < num_fontes; i++) {
+            int idx_fonte = args->lista_idx_arquivo_origem[i];
+            const char* log_tipo = args->log_types[i];
+
+            moveLogs(nomeArquivos[idx_fonte], nomeArquivos[idx_destino], log_tipo);
+        }
+
+        // Libera todos os arquivos
+        unlock_multiplos_arquivos(myself, todos_indices, num_total_arquivos);
+    }
+
+    free(todos_indices);
+    printf("INFO: Thread Empresa [PREVENÇÃO] (ID %d) finalizando.\n", myself->id_logico);
+
+    return NULL;
+}

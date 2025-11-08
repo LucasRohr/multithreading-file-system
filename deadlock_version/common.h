@@ -79,6 +79,7 @@ void liberarTodosLocks(ThreadData *myself); // Função para thread liberar todo
 // --- Funções das Threads ---
 void *ThreadBuffer(void *arg);
 void *ThreadOrganizadora(void *arg);
-void *ThreadEmpresa(void *arg);
+void *ThreadEmpresa(void *arg); // Parte 2 (Detecção de deadlock)
+void *ThreadEmpresa_Prevencao(void *arg); // Parte 3 (Prevenção de deadlock)
 
 #endif

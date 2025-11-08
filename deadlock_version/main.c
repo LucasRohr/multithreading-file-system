@@ -1,5 +1,9 @@
 #include "deadlock.h"
 
+// 0 = Parte 2 (detecção e resolução de deadlock)
+// 1 = Parte 3 (prevenção de deadlock)
+#define MODO_PREVENCAO 1
+
 // Arquivos globais
 ArquivoData arquivos[N_ARQUIVOS];
 
@@ -105,87 +109,82 @@ int main() {
     // Inicializar e criar as 3 Threads das Empresas
     printf("Criando threads das empresas...\n");
 
-    // Empresa 0: Ômega
-    threadsEmp[0].id_logico = 6; // IDs 6, 7, 8
-    threadsEmp[0].stop = false;
-    threadsEmp[0].target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
+    // Loop para criar as 3 empresas
+    for (int i = 0; i < N_THREADS_EMPRESAS; i++) {
+        threadsEmp[i].id_logico = 6 + i;
+        threadsEmp[i].stop = false;
+        threadsEmp[i].target_arquivo_id = -1;
 
-    for (int j = 0; j < N_ARQUIVOS; j++) {
-        threadsEmp[0].acessando[j] = false;
-    }
+        for (int j = 0; j < N_ARQUIVOS; j++) {
+            threadsEmp[i].acessando[j] = false; // Thread ainda não quer acessar arquivo
+        }
 
-    all_threads[6] = &threadsEmp[0]; // Atribui thread na lista
+        all_threads[6 + i] = &threadsEmp[i]; // Adiciona na lista de threads
 
-    argsEmpresa[0].data = &threadsEmp[0];
-    argsEmpresa[0].idx_arquivo_destino = IDX_OMEGA;
-    argsEmpresa[0].lista_idx_arquivo_origem = fontes_omega;
-    argsEmpresa[0].log_types = logs_omega;
-    argsEmpresa[0].num_fontes = 3;
-    pthread_create(&threadsEmp[0].thread, NULL, ThreadEmpresa, &argsEmpresa[0]);
+        // Configura os args das empresas
+        if (i == 0) { // Omega
+            argsEmpresa[i].data = &threadsEmp[i];
+            argsEmpresa[i].idx_arquivo_destino = IDX_OMEGA;
+            argsEmpresa[i].lista_idx_arquivo_origem = fontes_omega;
+            argsEmpresa[i].log_types = logs_omega;
+            argsEmpresa[i].num_fontes = 3;
+        } else if (i == 1) { // KleubsMax
+            argsEmpresa[i].data = &threadsEmp[i];
+            argsEmpresa[i].idx_arquivo_destino = IDX_KLEUBSMAX;
+            argsEmpresa[i].lista_idx_arquivo_origem = fontes_kleubsmax;
+            argsEmpresa[i].log_types = logs_kleubsmax;
+            argsEmpresa[i].num_fontes = 3;
+        } else { // ChirpTome
+            argsEmpresa[i].data = &threadsEmp[i];
+            argsEmpresa[i].idx_arquivo_destino = IDX_CHIRPTOME;
+            argsEmpresa[i].lista_idx_arquivo_origem = fontes_chirptome;
+            argsEmpresa[i].log_types = logs_chirptome;
+            argsEmpresa[i].num_fontes = 3;
+        }
 
-    // Empresa 1: KleubsMax
-    threadsEmp[1].id_logico = 7;
-    threadsEmp[1].stop = false;
-    threadsEmp[1].target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
-
-    for (int j = 0; j < N_ARQUIVOS; j++) {
-        threadsEmp[1].acessando[j] = false;
-    }
-
-    all_threads[7] = &threadsEmp[1]; // Atribui thread na lista
-
-    argsEmpresa[1].data = &threadsEmp[1];
-    argsEmpresa[1].idx_arquivo_destino = IDX_KLEUBSMAX;
-    argsEmpresa[1].lista_idx_arquivo_origem = fontes_kleubsmax;
-    argsEmpresa[1].log_types = logs_kleubsmax;
-    argsEmpresa[1].num_fontes = 3;
-    pthread_create(&threadsEmp[1].thread, NULL, ThreadEmpresa, &argsEmpresa[1]);
-
-    // Empresa 2: ChirpTome
-    threadsEmp[2].id_logico = 8;
-    threadsEmp[2].stop = false;
-    threadsEmp[2].target_arquivo_id = -1; // Thread ainda não quer acessar nenhum arquivo
-
-    for (int j = 0; j < N_ARQUIVOS; j++) {
-        threadsEmp[2].acessando[j] = false;
-    }
-
-    all_threads[8] = &threadsEmp[2]; // Atribui thread na lista
-
-    argsEmpresa[2].data = &threadsEmp[2];
-    argsEmpresa[2].idx_arquivo_destino = IDX_CHIRPTOME;
-    argsEmpresa[2].lista_idx_arquivo_origem = fontes_chirptome;
-    argsEmpresa[2].log_types = logs_chirptome;
-    argsEmpresa[2].num_fontes = 3;
-    pthread_create(&threadsEmp[2].thread, NULL, ThreadEmpresa, &argsEmpresa[2]);
-
-    // 3. Loop principal (Parte 2: Detecção de Deadlock)
-
-    printf("\n*** INICIANDO DETECTOR DE DEADLOCK (Parte 2) ***\n");
-    int path_ciclo[N_THREADS_TOTAL + 1]; // Armazena o ciclo ex: T1 -> T2 -> T1
-    int path_len = 0;
-
-    for (int i = 0; i < 12; i++) { // Roda por 60 segundos (12 * 5s)
-        sleep(5);
-
-        path_len = encontraCicloDeadlock(all_threads, path_ciclo);
-
-        if (path_len > 0) {
-            printf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-            printf(">>> DEADLOCK DETECTADO <<<\n");
-
-            // Imprime o estado 
-            printaDadosDeadlock(path_ciclo, path_len, all_threads);
-
-            // Resolve o deadlock 
-            resolverDeadlock(path_ciclo, path_len, all_threads);
-
-            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n");
-
-            // Dá um tempo para a vítima se encerrar
-            sleep(2); 
+        // Condicional para ver qual parte executar (2 ou 3, detecção ou prevenção)
+        if (MODO_PREVENCAO) {
+            printf("INFO: Criando Thread Empresa %d no modo PREVENÇÃO (Parte 3)\n", i);
+            pthread_create(&threadsEmp[i].thread, NULL, ThreadEmpresa_Prevencao, &argsEmpresa[i]);
         } else {
-            printf("[Detector] Ciclo %d/12: Nenhum deadlock encontrado.\n", i + 1);
+            printf("INFO: Criando Thread Empresa %d no modo DETECÇÃO (Parte 2)\n", i);
+            pthread_create(&threadsEmp[i].thread, NULL, ThreadEmpresa, &argsEmpresa[i]);
+        }
+    }
+
+    // 3. Loop principal (Parte 2 e 3)
+
+    if (MODO_PREVENCAO) {
+        printf("\n*** MODO PREVENÇÃO (Parte 3) ***\n");
+        printf("O sistema de arquivos irá executar por 60s e deadlocks estão prevenidos de acontecer.\n");
+        sleep(60); // Tempo alto para teste para garantir que não há deadlocks
+    } else {
+        printf("\n*** INICIANDO DETECTOR DE DEADLOCK (Parte 2) ***\n");
+        int path_ciclo[N_THREADS_TOTAL + 1]; // Armazena o ciclo ex: T1 -> T2 -> T1
+        int path_len = 0;
+
+        for (int i = 0; i < 12; i++) { // Roda por 60 segundos (12 * 5s)
+            sleep(5);
+
+            path_len = encontraCicloDeadlock(all_threads, path_ciclo);
+
+            if (path_len > 0) {
+                printf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                printf(">>> DEADLOCK DETECTADO <<<\n");
+
+                // Imprime o estado 
+                printaDadosDeadlock(path_ciclo, path_len, all_threads);
+
+                // Resolve o deadlock 
+                resolverDeadlock(path_ciclo, path_len, all_threads);
+
+                printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n");
+
+                // Dá um tempo para a vítima se encerrar
+                sleep(2); 
+            } else {
+                printf("[Detector] Ciclo %d/12: Nenhum deadlock encontrado.\n", i + 1);
+            }
         }
     }
 
