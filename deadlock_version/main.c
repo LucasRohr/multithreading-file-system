@@ -86,6 +86,7 @@ int main() {
     argsEmpresa[0].idx_arquivo_destino = IDX_OMEGA;
     argsEmpresa[0].lista_idx_arquivo_origem = fontes_omega;
     argsEmpresa[0].log_types = logs_omega;
+    argsEmpresa[0].num_fontes = 3;
     pthread_create(&threadsEmp[0].thread, NULL, ThreadEmpresa, &argsEmpresa[0]);
 
     // Empresa 1: KleubsMax
@@ -95,6 +96,7 @@ int main() {
     argsEmpresa[1].idx_arquivo_destino = IDX_KLEUBSMAX;
     argsEmpresa[1].lista_idx_arquivo_origem = fontes_kleubsmax;
     argsEmpresa[1].log_types = logs_kleubsmax;
+    argsEmpresa[1].num_fontes = 3;
     pthread_create(&threadsEmp[1].thread, NULL, ThreadEmpresa, &argsEmpresa[1]);
 
     // Empresa 2: ChirpTome
@@ -104,6 +106,7 @@ int main() {
     argsEmpresa[2].idx_arquivo_destino = IDX_CHIRPTOME;
     argsEmpresa[2].lista_idx_arquivo_origem = fontes_chirptome;
     argsEmpresa[2].log_types = logs_chirptome;
+    argsEmpresa[2].num_fontes = 3;
     pthread_create(&threadsEmp[2].thread, NULL, ThreadEmpresa, &argsEmpresa[2]);
 
     // 3. Loop principal (Parte 2: Detecção de Deadlock)
