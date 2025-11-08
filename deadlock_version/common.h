@@ -38,6 +38,7 @@ extern const char *threadNames[N_THREADS_TOTAL];
 typedef struct {
     int id;
     pthread_mutex_t mutex;
+    int accessing_thread_id; // Id da thread que está segurando o arquivo no momento
 } ArquivoData;
 
 // Representação de uma Thread, com flag de acesso e pausa
@@ -46,6 +47,7 @@ typedef struct {
     int id_logico; // Para sabermos qual thread é (0-8)
     bool stop;
     bool acessando[N_ARQUIVOS];
+    int target_arquivo_id; // Id do arquivo alvo que a thread quer travar e acessar
 } ThreadData;
 
 // Representação dos argumentos para gerenciamento das threads de logs (organizadoras)
@@ -72,6 +74,7 @@ extern ArquivoData arquivos[N_ARQUIVOS];
 void moveLogs(const char *origem, const char *destino, const char *palavra);
 void geraLogs(const char *name);
 void LogThread(ThreadData *t);
+void liberarTodosLocks(ThreadData *myself); // Função para thread liberar todos seus locks de mutexes
 
 // --- Funções das Threads ---
 void *ThreadBuffer(void *arg);

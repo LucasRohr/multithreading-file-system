@@ -88,4 +88,22 @@ void LogThread(ThreadData *t) {
     }
 }
 
+// Chamada por uma thread que foi escolhida como vítima de deadlock
+void liberarTodosLocks(ThreadData *myself) {
+    printf("WARNING: Vítima de deadlock [Thread %s] liberando todos os arquivos...\n", threadNames[myself->id_logico]);
+
+    for (int i = 0; i < N_ARQUIVOS; i++) {
+        if (myself->acessando[i]) {
+            printf("WARNING: [Thread %s] liberando arquivo %s\n", threadNames[myself->id_logico], nomeArquivos[i]);
+            
+            // Atualiza o estado de acesso da thread e do arquivo
+            myself->acessando[i] = false;
+            arquivos[i].accessing_thread_id = -1;
+            
+            // Libera o mutex do arquivo
+            pthread_mutex_unlock(&arquivos[i].mutex);
+        }
+    }
+}
+
 // ------
