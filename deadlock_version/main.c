@@ -2,7 +2,7 @@
 
 // 0 = Parte 2 (detecção e resolução de deadlock)
 // 1 = Parte 3 (prevenção de deadlock)
-#define MODO_PREVENCAO 1
+#define MODO_PREVENCAO 0
 
 // Arquivos globais
 ArquivoData arquivos[N_ARQUIVOS];

@@ -6,14 +6,14 @@ void *ThreadBuffer(void *arg) {
     ArquivoData *d = &arquivos[IDX_BUFFER];
 
     while(!myself->stop) {
-        pthread_mutex_lock(&d->mutex); // Trava thread
+        pthread_mutex_lock(&d->mutex); // Trava arquivo
         myself->acessando[IDX_BUFFER] = true;
         LogThread(myself); // Printa dados
         
         geraLogs(nomeArquivos[d->id]); // Gera logs no buffer
 
         myself->acessando[IDX_BUFFER] = false;
-        pthread_mutex_unlock(&d->mutex); // Destrava thread
+        pthread_mutex_unlock(&d->mutex); // Destrava arquivo
         sleep(1);
     }
 
