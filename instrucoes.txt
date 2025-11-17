@@ -1,0 +1,19 @@
+Para rodar o projeto:
+
+Em modo vulnerável a deadlocks (Parte 1):
+
+- Entre na pasta: cd vulnerable_version
+- Compile: gcc main.c file_aux.c threads.c -o vulnerable
+- Execute: ./vulnerable
+
+Em modo de detecção e resolução de deadlocks (Partes 2 e 3):
+
+IMPORTANTE: para escolher rodar o projeto de deadlocks no Modo de Prevenção (Parte 3),
+            mude o "#define MODO_PREVENCAO 0" para "#define MODO_PREVENCAO 1" no arquivo deadlock_version/main.c
+
+            Caso contrário rodará com a configuração da Parte 2 de detecção e resolução de deadlocks.
+            Essa flag alterna entre as duas partes finais do trabalho.
+
+- Entre na pasta: cd deadlock_version
+- Compile: gcc main.c file_aux.c threads.c deadlock.c  -o deadlock_handle
+- Execute: ./deadlock_handle
